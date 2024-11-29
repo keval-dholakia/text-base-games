@@ -1,7 +1,8 @@
-#include <iostream>
-#include <time.h>
-#include <iomanip>
+// #include <iostream>
+// #include <time.h>
+// #include <iomanip>
 #include <windows.h>
+#include <bits/stdc++.h>
 using namespace std;
 // 2048
 /*
@@ -14,14 +15,30 @@ d --> right
 */
 
 // ******** to do ***********
-// write end game code  
+// write end game code
 
 #define delay 1
 #define type 2
+#define Z 3
+struct State
+{
+    int board[4][4];
+    int score;
+    int cnt;
 
+    State(int a[4][4], int s, int c)
+    {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                board[i][j] = a[i][j];
+        score = s;
+        cnt = c;
+    }
+};
+deque<State> undo, redo;
 int board[4][4] = {0};
 int score = 0;
-int count = 0;
+int cnt = 0;
 int move_merge = 0;
 
 void print(int n);
@@ -39,7 +56,7 @@ int main()
     system("color F0");
     genrate();
     print(type);
-    while (count < 16 || check())
+    while (cnt < 16 || check())
     {
         play();
     }
@@ -83,10 +100,43 @@ void play()
         right();
     else if (c == 'a')
         left();
+    else if (c == 'u')
+    {
+        State old = undo.back();
+        State curr(board , score , cnt);
+        undo.pop_back();
+        redo.push_back(curr);
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                board[i][j] = old.board[i][j];
+        score = old.score;
+        cnt = old.cnt;
+        print(type);
+    }
+    else if (c == 'r')
+    {
+        State old = redo.back();
+        State curr(board , score , cnt);
+        redo.pop_back();
+        undo.push_back(curr);
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                board[i][j] = old.board[i][j];
+        score = old.score;
+        cnt = old.cnt;
+        print(type);
+    }
     else
         return;
     if (move_merge)
     {
+
+        State curr(board, score, cnt);
+        undo.push_back(curr);
+        while (undo.size() > Z)
+            undo.pop_front();
+        while (!redo.empty())
+            redo.pop_back();
         genrate();
         print(type);
         move_merge = 0;
@@ -98,7 +148,7 @@ void merge_temp(int temp[])
     {
         if (temp[i] != 0 && temp[i] == temp[i + 1])
         {
-            count--;
+            cnt--;
             move_merge++;
             score += 2 * temp[i];
             temp[i] *= 2;
@@ -217,24 +267,24 @@ void down()
 void genrate()
 {
     int numretor_prob = 3, den_prob = 4; // porb of getting 2
-    count++;
+    cnt++;
     srand(time(NULL));
     int n = rand() % 16;
     srand(2 * time(NULL));
     int x = rand() % den_prob;
 
-    int count = 0;
+    int cnt = 0;
     int i = 0;
     while (true)
     {
         if (board[i / 4][i % 4] == 0)
         {
-            if (count == n)
+            if (cnt == n)
             {
                 board[i / 4][i % 4] = (x <= numretor_prob - 1) ? 2 : 4;
                 break;
             }
-            count++;
+            cnt++;
         }
         i++;
         i = i % 16;
